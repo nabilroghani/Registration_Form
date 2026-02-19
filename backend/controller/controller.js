@@ -1,17 +1,42 @@
+
 const User = require("../models/model");
 
 const userRegistrationForm = async (req, res) => {
-    const {name, email, phone} = req.body;
-    if(!name || !email || !phone){
-        return res.send("Please provide all Field");
+  try {
+    const { name, email, phone } = req.body;
+    
+    // Check karein ke file aayi hai ya nahi
+    if (!req.file) {
+      return res.status(400).json({ message: "Please upload an image" });
     }
 
-    const isMatchEmail = await User.find(email);
-    if(isMatchEmail) return res.send("Email is Already Apply try another email");
+    const image = req.file.path; // Cloudinary ka URL yahan se milega
 
-    const newUser = await User.create(name, email, phone);
+    // 1. Validation (Fixed logic: if any of these is missing)
+    if (!name || !email || !phone || !image) {
+      return res.status(400).json({ message: "Please provide all fields" });
+    }
 
-    res.send("User Register Succesfully");
-}
+    // 2. Duplicate Check
+    const existingUser = await User.findOne({ email }); 
+    if (existingUser) {
+      return res.status(400).json({ message: "Email is already registered" });
+    }
+
+    // 3. Create User
+    const newUser = await User.create({
+      name,
+      email,
+      phone,
+      image,
+    });
+
+    res.status(201).json({ message: "Registration successful", user: newUser });
+
+  } catch (error) {
+    console.error("Cloudinary/DB Error:", error);
+    res.status(500).json({ message: "Registration error", error: error.message });
+  }
+};
 
 module.exports = userRegistrationForm;
