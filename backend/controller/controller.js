@@ -39,4 +39,13 @@ const userRegistrationForm = async (req, res) => {
   }
 };
 
-module.exports = userRegistrationForm;
+const getData = async (req, res) => {
+  try {
+    const users = await User.find();
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({message: "Error fetching data", error: error.message});
+  }
+}
+
+module.exports = {userRegistrationForm, getData};
